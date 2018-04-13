@@ -1,0 +1,230 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+# load 
+```{r}
+rm(list = ls())
+require(Seurat)
+load("../data/e12_seurat.Rdata")
+load("../../genelists_finalSubmission/genes_cc_refined.RData")
+
+cells.use <- seur@cell.names[!seur@meta.data$subtype %like% 'excluded']
+seur@meta.data
+seur <- SubsetData(SetAllIdent(object = seur, 'subtype'), cells.use = cells.use, subset.raw = T)
+levels(seur@ident)
+
+
+```
+# filter genes
+Remove genes that don't define cell identity
+```{r}
+genes.all <- rownames(seur@data)
+# genes.housekeeping <- grep('^Rp[ls].*', genes.all, value =  T)
+# genes.housekeeping <- grep('Rn45s', genes.all, value = T)
+# genes.housekeeping <- unique(genes.housekeeping, grep('Lars2', genes.all, value = T))
+# genes.housekeeping <- unique(genes.housekeeping, grep('Malat1', genes.all, value = T))
+
+load("../../genelists_finalSubmission/genes_cc_refined.RData")
+
+# genes.use <- genes.all[!genes.all %in% c(genes.cc, genes.housekeeping)]
+genes.use <- genes.all[!genes.all %in% genes.cc]
+
+sum(seur@ident %in% c("CV1","Endocardial"))
+
+```
+
+```{r}
+source('../../scripts_finalSubmission/pairwiseDiscretenessTest_v2.R')
+pair.res <- pairwiseContinuityAnalysis_v2(object = seur, dir= 'pairwise_analysis', genes.use = genes.use)
+save(pair.res, file="pairwise_analysis/pairwiseResults_iRPCAcluster_noCCnoRiboGenes.Rdata")
+```
+
+```{r}
+source('../../scripts_finalSubmission/pairwiseDiscretenessTest_v2.R')
+
+load("pairwise_analysis/pairwiseResults_iRPCAcluster_noCCnoRiboGenes.Rdata")
+pdf( "~/Dropbox/shared with Tianying/Coup manuscript/Nature submission/second revision/new_plots/connectogram_iRPCAcluster_fixed.pdf", height = 5, width = 7)
+PlotConnectogram(seur, pair.res, colorvec = seur@meta.data$subtype_color, median.disc.cutoff = -3, disc.conf.cutoff = .6, edge.width.type = 'fractionOfSmallest.intermediate')
+dev.off()
+
+# the discrete "confidence" (bootstrap method) does not seem like a great metric - can make cell types with small # of cells falsely be called discrete. Should use a confidence cutoff of no lower than 0.6.
+pdf( "connectogram_iRPCAcluster_fixed.pdf", height = 5, width = 7)
+PlotConnectogram(seur, pair.res, colorvec = seur@meta.data$subtype_color, median.disc.cutoff = -3, disc.conf.cutoff = .6, edge.width.type = 'fractionOfSmallest.intermediate')
+dev.off()
+
+TSNEPlot(seur, colors.use = unique(seur@meta.data$subtype_color))
+```
+
+```{r}
+load("pairwise_analysis/pairwiseResults_iRPCAcluster_noCCnoRiboGenes.Rdata")
+# Inspect the relationships between the three metrics of discreteness/continuity
+plot(pair.res[[1]][, c("discrete.median","discrete.conf","f.transition","N.transition")])
+
+# plot score histograms in order of one of the pairwise statistics
+pdf("scores_discrete.median_noCCnoRiboGenes.pdf", width = 3, height = 3)
+for(i in order(pair.res$pairwise.statistics$discrete.conf)){
+  stat = pair.res$pairwise.statistics[i, "discrete.conf"]
+  id1=as.character(pair.res$pairwise.statistics[i, "id1"])
+  id2=as.character(pair.res$pairwise.statistics[i, "id2"])
+  # print(c(id1, id2))
+  scores <- pair.res[[2]][paste(id1, id2, "score", sep="_")][[1]]
+  p=qplot(x=scores) +
+    xlab(paste(id1, id2, "score")) +
+    ggtitle(formatC(stat, digits=2)) +
+    theme(axis.text.y = element_blank(), axis.title.y = element_blank())
+  
+  print(p)
+  
+  sig.1<- pair.res[[2]][paste(id1, id2, "sig.1", sep="_")][[1]]
+  sig.2<- pair.res[[2]][paste(id1, id2, "sig.2", sep="_")][[1]]
+  p=qplot(x=sig.1, y=sig.2) +
+    xlab(paste(id1, "signature")) +
+    ylab(paste(id2, "signature")) +
+    ggtitle(formatC(stat, digits=2)) +
+    # theme(axis.text.y = element_blank(), axis.title.y = element_blank()) +
+    coord_fixed() +
+    xlim(c(0,1))+
+    ylim(c(0,1))
+  
+  print(p)
+  # plist[[j]] <- p
+  # j=j+1
+}
+dev.off()
+```
+
+# troubleshoot pairwise PCA
+```{r}
+source("../../scripts_finalSubmission/pairwiseDiscretenessTest_v3.R")
+
+id1 = 'CV1'
+id2 = "Endocardial"
+
+pairObject <- SubsetData(SetAllIdent(seur, 'subtype'), ident.use = c(id1, id2), do.center = F,subset.raw = T)
+
+pc.res <- scoreCellsByBestPC(object = pairObject, id1 = id1, id2 = id2, n.pcs = 3, genes.use = genes.use)
+print(colnames(pc.res[[1]]))
+qplot(pc.res[[1]][,1], pc.res[[1]][,2], color=pairObject@meta.data$subtype) + coord_fixed() +
+  ggtitle("all genes no CC")
+
+# test using only variable genes
+pairObject <- FindVariableGenes(pairObject, do.plot = F)
+pairObject@var.genes <- pairObject@var.genes[pairObject@var.genes %in% genes.use]
+genes.use.var <- pairObject@var.genes
+pc.res <- scoreCellsByBestPC(object = pairObject, id1 = id1, id2 = id2, n.pcs = 3, genes.use = genes.use.var)
+print(colnames(pc.res[[1]]))
+qplot(pc.res[[1]][,1], pc.res[[1]][,2], color=pairObject@meta.data$subtype) + coord_fixed() +
+  ggtitle("1500 var genes")
+
+```
+
+
+test log10.cpm matrix from iRPCA
+```{r}
+load('../data/fetal_venule_exp1_Nextseq.dt_goodCells.RData')
+load('../data/fetal_venule_exp1_Nextseq.cell_info.RData')
+
+cast.log10cpm <- as.data.frame(dcast.data.table(dt.fv1_NS.good, cell.name ~ gene))
+rownames(cast.log10cpm) <- cast.log10cpm$cell.name
+cast.log10cpm <- cast.log10cpm[, colnames(cast.log10cpm) != 'cell.name']
+cast.log10cpm <- as.matrix(t(cast.log10cpm))
+cast.log10cpm <- Matrix(cast.log10cpm, sparse = T)
+
+seur.2 <- copy(seur)
+class(seur.2@data)
+class(cast.log10cpm)
+seur.2@data <- cast.log10cpm[rownames(seur.2@raw.data), seur.2@cell.names]
+
+```
+
+```{r}
+id1 = 'Mesenchymal.2'
+id2 = "Endocardial"
+
+pairObject <- SubsetData(SetAllIdent(seur.2, 'subtype'), ident.use = c(id1, id2), do.center = F,subset.raw = T)
+
+pc.res <- scoreCellsByBestPC(object = pairObject, id1 = id1, id2 = id2, n.pcs = 3, genes.use = genes.use)
+print(colnames(pc.res[[1]]))
+qplot(pc.res[[1]][,1], pc.res[[1]][,2], color=pairObject@meta.data$subtype) + coord_fixed() +
+  ggtitle("all genes no CC")
+
+# test using only variable genes
+pairObject <- FindVariableGenes(pairObject, do.plot = F)
+pairObject@var.genes <- pairObject@var.genes[pairObject@var.genes %in% genes.use]
+genes.use.var <- pairObject@var.genes
+pc.res <- scoreCellsByBestPC(object = pairObject, id1 = id1, id2 = id2, n.pcs = 3, genes.use = genes.use.var)
+print(colnames(pc.res[[1]]))
+qplot(pc.res[[1]][,1], pc.res[[1]][,2], color=pairObject@meta.data$subtype) + coord_fixed() +
+  ggtitle("top var genes")
+
+
+```
+
+
+# PDT with original log10.cpm values (not Seurat-normalized values)
+
+```{r}
+source('../../scripts_finalSubmission/pairwiseDiscretenessTest_v2.R')
+pair.res <- pairwiseContinuityAnalysis_v2(object = seur.2, dir= 'pairwise_analysis', genes.use = genes.use)
+save(pair.res, file="pairwise_analysis/pairwiseResults_iRPCAcluster_origLog10CPM.Rdata")
+```
+
+```{r}
+source('../../scripts_finalSubmission/pairwiseDiscretenessTest_v2.R')
+
+load("pairwise_analysis/pairwiseResults_iRPCAcluster_origLog10CPM.Rdata")
+pdf( "~/Dropbox/shared with Tianying/Coup manuscript/Nature submission/second revision/new_plots/connectogram_iRPCAcluster_fixed.pdf", height = 5, width = 7)
+PlotConnectogram(seur.2, pair.res, colorvec = seur@meta.data$subtype_color, median.disc.cutoff = -6, disc.conf.cutoff = .4, edge.width.type = 'fractionOfSmallest.intermediate')
+dev.off()
+
+# the discrete "confidence" (bootstrap method) does not seem like a great metric - can make cell types with small # of cells falsely be called discrete. Should use a confidence cutoff of no lower than 0.6.
+pdf( "connectogram_iRPCAcluster_origLog10CPM.pdf", height = 5, width = 7)
+PlotConnectogram(seur.2, pair.res, colorvec = seur@meta.data$subtype_color, median.disc.cutoff = -6, disc.conf.cutoff = .4, edge.width.type = 'fractionOfSmallest.intermediate')
+dev.off()
+
+TSNEPlot(seur, colors.use = unique(seur@meta.data$subtype_color))
+```
+
+```{r}
+load("pairwise_analysis/pairwiseResults_iRPCAcluster_noCCnoRiboGenes.Rdata")
+# Inspect the relationships between the three metrics of discreteness/continuity
+plot(pair.res[[1]][, c("discrete.median","discrete.conf","f.transition","N.transition")])
+
+# plot score histograms in order of one of the pairwise statistics
+pdf("scores_discrete.median_noCCnoRiboGenes.pdf", width = 3, height = 3)
+for(i in order(pair.res$pairwise.statistics$discrete.conf)){
+  stat = pair.res$pairwise.statistics[i, "discrete.conf"]
+  id1=as.character(pair.res$pairwise.statistics[i, "id1"])
+  id2=as.character(pair.res$pairwise.statistics[i, "id2"])
+  # print(c(id1, id2))
+  scores <- pair.res[[2]][paste(id1, id2, "score", sep="_")][[1]]
+  p=qplot(x=scores) +
+    xlab(paste(id1, id2, "score")) +
+    ggtitle(formatC(stat, digits=2)) +
+    theme(axis.text.y = element_blank(), axis.title.y = element_blank())
+  
+  print(p)
+  
+  sig.1<- pair.res[[2]][paste(id1, id2, "sig.1", sep="_")][[1]]
+  sig.2<- pair.res[[2]][paste(id1, id2, "sig.2", sep="_")][[1]]
+  p=qplot(x=sig.1, y=sig.2) +
+    xlab(paste(id1, "signature")) +
+    ylab(paste(id2, "signature")) +
+    ggtitle(formatC(stat, digits=2)) +
+    # theme(axis.text.y = element_blank(), axis.title.y = element_blank()) +
+    coord_fixed() +
+    xlim(c(0,1))+
+    ylim(c(0,1))
+  
+  print(p)
+  # plist[[j]] <- p
+  # j=j+1
+}
+dev.off()
+```
