@@ -13,6 +13,7 @@ library(cowplot)
 library(Rmisc)
 library(Seurat)
 library(parallel)
+library(cba)
 
 ## Modified Seurat functions
 SubsampByAveraging <- function(data, ident.use, max.cells.per.ident = 10){

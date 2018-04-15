@@ -1077,7 +1077,7 @@ save(cells.allr10.rest, file = paste0(cordir,'all_r10_rest.RData'))
 write.table(cells.allr10.rest, file = paste0(cordir,'all_r10_rest.txt'))
 
 with(pc.scores, plot(PC2.score, PC9.score, pch = 20))
-with(pc.scores[cell.name %in% cells.allr10.aplnr],points(PC2.score, PC9.score, col = 'green', pch = 20 ))
+with(pc.scores[cell.name %in% cells.allr10.rest],points(PC2.score, PC9.score, col = 'green', pch = 20 ))
 
 ```
 
