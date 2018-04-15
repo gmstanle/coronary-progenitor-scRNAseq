@@ -1,10 +1,10 @@
 ---
 title: "iRPCA of e12 coronary progenitors"
 output:
+  pdf_document: default
+  html_notebook: default
   html_document:
     df_print: paged
-  html_notebook: default
-  pdf_document: default
 ---
 
 # Load data
