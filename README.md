@@ -11,7 +11,10 @@ Clone this repository into a new directory.
 git clone https://github.com/gmstanle/coronary-progenitor-scRNAseq.git
 cd coronary-progenitor-scRNAseq
 ```
-Download two data objects from figshare into the data/ directory:
+Download two data objects from figshare into the data/ directory
+
+
+Linux:
 ```
 cd data
 wget https://ndownloader.figshare.com/files/11086496
@@ -19,10 +22,19 @@ wget https://ndownloader.figshare.com/files/11089799
 cd ..
 ```
 
+MacOS: use a web browser to open the above links, and they will begin downloading. Then move the data objects into the data folder:
+
+```
+cd data
+mv ~/Downloads/fetal_venule_e12_seurat.Rdata .
+mv ~/Downloads/fetal_venule_exp1_Nextseq.dt_goodCells.RData .
+cd ..
+```
+Mac users who have not done so should download the XQuartz package via the XQuartz website.
 ### Installing
 
 
-Open RStudio and install the requisite packages:
+Start R and install the requisite packages:
 
 
 ```

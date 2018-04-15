@@ -708,15 +708,16 @@ dt.pca.2 = merge(dt.pca[gene %in% c('Mrc1','Gja4','Nr2f2','Apln')],
                  by = 'cell.name')
 
 # Cutoff to define SVc-CV Plexus boundary 
-cutoff.1= .15
+cutoff= .15
 
 plt=ggplot(dt.pca.2, aes(PC2.score, PC3.score, color = log10.cpm)) + geom_point(size=.8) +
   scale_color_gradientn(colours=brewer.pal(9,'YlOrBr')[3:9]) +
   facet_wrap(~gene) + coord_fixed() +
-  geom_vline(xintercept = cutoff.1)
+  geom_vline(xintercept = cutoff)
 plt
 save_plot('all_r6/all_r6_separation.pdf',plt,ncol=2, nrow=2, base_height = 2.5)
 
+# Define the cutoff to remove SVc cells and explore CV Plexus-arterial heterogeneity better
 cells.allr6.SVc = pc.scores[PC2.score > cutoff, cell.name]
 cells.allr6.rest = pc.scores[!cell.name %in% cells.allr6.SVc, cell.name]
 
