@@ -47,9 +47,11 @@ install.packages(pkg)
 
 Open e12_iRPCA/e12_iRPCA.Rmd in RStudio
 
-Run all chunks to group cells based on iterative rPCA.
+Run all chunks to group cells based on iterative rPCA. Each iteration of rPCA has a folder with the results from rPCA on that group of cells. The first iteration is in the folder all_r1 and starts at the second chunk of the R notebook e12_iRPCA.Rmd. rPCA has been pre-computed for each step and the PC scores are stored in a file "PC_allscores.csv" in each iteration's folder (e.g. "all_r1/PC_allscores.csv"). These files contain the default PC scores (columns "PC1", "PC2", ...) as well as the sum-of-60 scores ("PC1.score", "PC2.score", ...). The pipeline uses only the modified sum-of-60 scores. The cutoffs used for iterating and defining cell types are hard-coded into each
 
-To re-do the pipeline fully manually, set recalculate.pca <- TRUE. This may require changing some of the cutoffs in each step, but the file e12_iRPCA.pdf can be used as a guide for clustering.
+To re-do the pipeline fully manually, set recalculate.pca <- TRUE. This may require changing some of the cutoffs in each step, and the file e12_iRPCA.pdf can be used as a guide for clustering. 
+
+Cell cluster are added to the metadata file (data/e12_subtypeInfo.Rdata) in the second-to-last chunk. In the last chunk, the average expression of *in situ* validated marker genes is plotted across all clusters.
 
 
 ## Running PDT (pairwise discreteness test)
