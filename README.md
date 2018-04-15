@@ -30,53 +30,20 @@ packages = read.table('packages.txt')
 install.packages(packages)
 ```
 
-### Installing
 
-A step by step series of examples that tell you have to get a development env running
+## Running iRPCA
 
-Say what the step will be
+Open e12_iRPCA/e12_iRPCA.Rmd in RStudio
 
-```
-Give the example
-```
+Run all chunks to group cells based on iterative rPCA.
 
-And repeat
+To re-do the pipeline fully manually, set recalculate.pca <- TRUE. This may require changing some of the cutoffs in each step, but the file e12_iRPCA.pdf can be used as a guide for clustering.
 
-```
-until finished
-```
 
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **Geoffrey Stanley** 
 
 ## License
 
