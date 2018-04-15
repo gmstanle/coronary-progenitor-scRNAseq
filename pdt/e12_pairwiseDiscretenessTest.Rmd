@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# load 
+Load Seurat object and add iRPCA-defined subtypes. 
+Modify the @data field so it contains the same log10.cpm values used in iRPCA.
+```{r}
+rm(list = ls())
+require(Seurat)
+require(data.table)
+load("../data/fetal_venule_e12_seurat.Rdata")
+load("../genelists/genes_cc_refined.RData")
+load("../e12_iRPCA/e12_subtypeInfo.Rdata")
+
+cells.use <- as.character(e12.subtype.info[, cell.name])
+seur <- SubsetData(SetAllIdent(object = seur, 'subtype'), cells.use = cells.use, subset.raw = T)
+metadata <- as.data.frame(e12.subtype.info)
+rownames(metadata) <- metadata$cell.name
+seur <- AddMetaData(seur, metadata[seur@cell.names, ])
+
+seur@meta.data$subtype <- metadata[seur@cell.names, "subtype"]
+seur@meta.data$subtype_color <- metadata[seur@cell.names, "subtype_color"]
+
+load('../data/fetal_venule_exp1_Nextseq.dt_goodCells.RData')
+
+cast.log10cpm <- as.data.frame(dcast.data.table(dt.fv1_NS.good, cell.name ~ gene))
+rownames(cast.log10cpm) <- cast.log10cpm$cell.name
+cast.log10cpm <- cast.log10cpm[, colnames(cast.log10cpm) != 'cell.name']
+cast.log10cpm <- as.matrix(t(cast.log10cpm))
+cast.log10cpm <- Matrix(cast.log10cpm, sparse = T)
+
+seur@data <- cast.log10cpm[rownames(seur@raw.data), seur@cell.names]
+
+```
+
+# filter genes
+Remove genes that don't define cell identity (cell cycle)
+```{r}
+genes.all <- rownames(seur@data)
+load("../genelists/genes_cc_refined.RData")
+genes.use <- genes.all[!genes.all %in% genes.cc]
+genes.use <- genes.use[!genes.use %in% c('Rn45s','Lars2','Malat1')]
+```
+
+# PDT on iRPCA-defined clusters
+```{r}
+source('../scripts/pairwiseDiscretenessTest_v2.R')
+pair.res <- pairwiseDiscretenessTest_v2(object = seur, dir= './', genes.use = genes.use)
+save(pair.res, file="pairwiseResults_iRPCAcluster.Rdata")
+```
+
+```{r}
+source('../scripts/pairwiseDiscretenessTest_v2.R')
+
+load("pairwiseResults_iRPCAcluster.Rdata")
+seur <- SetAllIdent(seur, 'subtype')
+
+PlotConnectogram(seur, pair.res, colorvec = seur@meta.data$subtype_color, edge.width.type = 'fractionOfSmallest.intermediate')
+```
+

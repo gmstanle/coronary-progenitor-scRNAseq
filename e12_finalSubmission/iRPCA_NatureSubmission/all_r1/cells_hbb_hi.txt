@@ -1,6 +1,0 @@
-"x"
-"1" "fv1_NS_p1c4r1_D01"
-"2" "fv1_NS_p3c2r1_O12"
-"3" "fv1_NS_p4c3r2_J19"
-"4" "fv1_NS_p6c6r8_P11"
-"5" "fv1_NS_p7c4r5_I14"
