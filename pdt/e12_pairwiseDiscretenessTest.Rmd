@@ -10,6 +10,8 @@ Modify the @data field so it contains the same log10.cpm values used in iRPCA.
 rm(list = ls())
 require(Seurat)
 require(data.table)
+source('../scripts/pairwiseDiscretenessTest_v2.R')
+
 load("../data/fetal_venule_e12_seurat.Rdata")
 load("../genelists/genes_cc_refined.RData")
 load("../e12_iRPCA/e12_subtypeInfo.Rdata")

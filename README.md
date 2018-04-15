@@ -26,8 +26,8 @@ Open RStudio and install the requisite packages:
 
 
 ```
-packages = read.table('packages.txt')
-install.packages(packages)
+pkg=as.character(read.table('packages.txt')[,1])
+install.packages(pkg)
 ```
 
 
@@ -40,6 +40,11 @@ Run all chunks to group cells based on iterative rPCA.
 To re-do the pipeline fully manually, set recalculate.pca <- TRUE. This may require changing some of the cutoffs in each step, but the file e12_iRPCA.pdf can be used as a guide for clustering.
 
 
+## Running PDT (pairwise discreteness test)
+
+Open pdt/e12_pairwiseDiscretenessTest.Rmd.
+
+Run all chunks - the first creates a Seurat object and adds the iRPCA-defined subtypes, the third chunk runs the pairwise discreteness test, and the fourth chunk plots the results of PDT.
 
 ## Authors
 
