@@ -102,6 +102,7 @@ load('all_r1/cells_hbb_hi.RData')
 dt.pca = dt.fv1_NS.good[!cell.name %in% cells.hbb.hi][!gene %in% genes.cc]
 setkey(dt.pca)
 
+
 n.pcs = 15
 if(recalculate.pca){
 
@@ -115,6 +116,7 @@ if(recalculate.pca){
 }
 # # remove coronary cells
 pc.scores = fread(paste0(cordir, 'PC_allscores.csv'))
+nrow(pc.scores)
 dt.pca.2 = merge(dt.pca[gene %in% c('Kcne3','Aplnr','Smoc1','Gpr126')],
                  pc.scores, 
                  by='cell.name')
@@ -486,6 +488,8 @@ save(cells.endocardRefine.r5.v2.pdgfra, file = 'endocard_refine_r5/cells_endocar
 
 ```
 # all_r3: (no endocard; remove valve) 
+No subtypes with small number of genes were detected; instead, cells with low number of genes just look like low-quality cells. Remove cells with < 3500 genes detected to improve clustering. 
+
 After defining the endocardial population (and two very small groups of cells: Fbln5+ and Hbb+) in the previous steps,
 analyze the rest of the cells with rPCA. 
 
@@ -521,6 +525,7 @@ make.facet.biplots(dt.pca,c(paste0('PC',2),paste0('PC',3)),cordir,size=1.5, plot
 
 rm(pc.scores, dt.pca.2)
 pc.scores = fread(paste0(cordir, 'PC_allscores.csv'))
+nrow(pc.scores)
 dt.pca.2 = merge(dt.pca[gene %in% c('Aplnr','Fst','Corin','Fbln2')],
                  pc.scores[,c('cell.name',colnames(pc.scores)[colnames(pc.scores) %like% "PC[0-9]"]), with = F],
                  by = 'cell.name')
@@ -703,6 +708,7 @@ make.facet.biplots(dt.pca,c(paste0('PC',2),paste0('PC',3)),cordir,size=1.5, plot
 
 
 pc.scores = fread(paste0(cordir, 'PC_allscores.csv'))
+print(nrow(pc.scores))
 dt.pca.2 = merge(dt.pca[gene %in% c('Mrc1','Gja4','Nr2f2','Apln')],
                  pc.scores,
                  by = 'cell.name')
